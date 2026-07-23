@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /*
+   * .ticket-edge — the signature scalloped/perforated top edge used on the
+   * floating cart bar, evoking a torn kitchen order ticket. Pure CSS mask,
+   * no image assets: a repeating row of semicircle "punches" cut from the
+   * top strip, stitched to a solid rect for the rest of the shape.
+   *
+   * --scallop controls the width (and therefore the radius) of each punch;
+   * override it per-instance with an inline style if a denser/looser
+   * perforation is ever needed.
+   */
+  .ticket-edge {
+    --scallop: 22px;
+    -webkit-mask:
+      radial-gradient(circle at 50% 0, transparent calc(var(--scallop) / 2 - 1px), #000 calc(var(--scallop) / 2))
+        top / var(--scallop) calc(var(--scallop) / 2) repeat-x,
+      linear-gradient(#000, #000) bottom / 100% calc(100% - var(--scallop) / 2) no-repeat;
+    mask:
+      radial-gradient(circle at 50% 0, transparent calc(var(--scallop) / 2 - 1px), #000 calc(var(--scallop) / 2))
+        top / var(--scallop) calc(var(--scallop) / 2) repeat-x,
+      linear-gradient(#000, #000) bottom / 100% calc(100% - var(--scallop) / 2) no-repeat;
+  }
+
+  /* Hides scrollbars on the horizontal category rail while keeping it scrollable. */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-paper text-ink font-body antialiased;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Print-optimized layout for the QR table-card generator.
+ *
+ * `.no-print` hides everything that isn't part of the printed sheet (nav,
+ * forms, buttons) — anything NOT meant to end up on paper carries this class.
+ * `.qr-print-page` becomes a real CSS grid only inside @media print; on
+ * screen it's a normal responsive grid via Tailwind classes on the same
+ * element, so the exact same markup serves both the on-screen preview and
+ * the printed sheet with no separate "print view" to keep in sync.
+ * --------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .qr-print-page {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8mm !important;
+  }
+
+  .qr-print-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #d4cfc3 !important;
+  }
+}
+
