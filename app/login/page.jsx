@@ -3,7 +3,8 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { loginOwner, fetchCurrentSession } from '../../lib/api';
+import { loginOwner, fetchCurrentSession, continueWithGoogle } from '../../lib/api';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 export default function LoginPageRoute() {
   return (
@@ -22,6 +23,10 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    document.title = 'Log In — SiMenu';
+  }, []);
 
   // If already logged in (a valid cookie from an earlier visit), skip the
   // login form entirely and go straight to the dashboard.
@@ -45,6 +50,27 @@ function LoginPage() {
     } catch (err) {
       setError(err.message || 'Something went wrong while logging in.');
       setIsSubmitting(false);
+    }
+  };
+
+  /**
+   * A Google credential here always represents a RETURNING owner on this
+   * page — a first-time Google sign-in with no existing account is directed
+   * to /register instead (see there for the "finish signup" flow), rather
+   * than silently creating a bare account with no restaurant attached.
+   */
+  const handleGoogleCredential = async (credential) => {
+    setError(null);
+    try {
+      const data = await continueWithGoogle({ credential });
+      if (data.needsRestaurantDetails) {
+        setError('No SiMenu account found for this Google account yet. Please create one from the Sign Up page.');
+        return;
+      }
+      const redirectTo = searchParams.get('redirectTo');
+      router.push(redirectTo || `/dashboard?res=${data.restaurant.slug}`);
+    } catch (err) {
+      setError(err.message || 'Something went wrong while signing in with Google.');
     }
   };
 
@@ -116,6 +142,14 @@ function LoginPage() {
           >
             {isSubmitting ? 'Logging in…' : 'Log in'}
           </button>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-sand" />
+            <span className="text-xs text-ink/40">or</span>
+            <div className="h-px flex-1 bg-sand" />
+          </div>
+
+          <GoogleSignInButton onCredential={handleGoogleCredential} />
         </form>
 
         <p className="mt-5 text-center text-sm text-ink/50">

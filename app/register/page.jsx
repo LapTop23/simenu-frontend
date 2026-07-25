@@ -1,9 +1,10 @@
 // app/register/page.jsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { registerOwner } from '../../lib/api';
+import { registerOwner, continueWithGoogle } from '../../lib/api';
+import GoogleSignInButton from '../../components/GoogleSignInButton';
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -16,6 +17,21 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    document.title = 'Create Your Account — SiMenu';
+  }, []);
+
+  // Shared by both the password form AND the Google button below — a
+  // restaurant name + valid web address are required regardless of which
+  // sign-up method finishes the job.
+  const validateRestaurantDetails = () => {
+    if (!restaurantName.trim()) return 'Restaurant name is required.';
+    if (!SLUG_PATTERN.test(slug)) {
+      return 'Your restaurant\'s web address may only contain lowercase letters, numbers, and hyphens.';
+    }
+    return null;
+  };
 
   // Auto-suggests a URL-safe slug from the restaurant name, but stops
   // auto-updating the moment the owner types into the slug field directly —
@@ -37,8 +53,9 @@ export default function RegisterPage() {
     event.preventDefault();
     setError(null);
 
-    if (!SLUG_PATTERN.test(slug)) {
-      setError('Your restaurant\'s web address may only contain lowercase letters, numbers, and hyphens.');
+    const validationError = validateRestaurantDetails();
+    if (validationError) {
+      setError(validationError);
       return;
     }
     if (password.length < 8) {
@@ -53,6 +70,37 @@ export default function RegisterPage() {
     } catch (err) {
       setError(err.message || 'Something went wrong while creating your account.');
       setIsSubmitting(false);
+    }
+  };
+
+  /**
+   * The restaurant name/slug fields at the top of this form are collected
+   * BEFORE either sign-up method — Google's button, once clicked, hands back
+   * a verified credential immediately, so those two fields need to already
+   * be valid by the time that happens, checked here rather than relying on
+   * the (skipped, in this path) password-form submit handler.
+   */
+  const handleGoogleCredential = async (credential) => {
+    setError(null);
+
+    const validationError = validateRestaurantDetails();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      const data = await continueWithGoogle({ credential, restaurantName, slug });
+      if (data.needsRestaurantDetails) {
+        // Shouldn't normally happen here since restaurantName/slug are
+        // always sent from this page — but handled defensively in case the
+        // backend's rules ever change.
+        setError('Please double-check your restaurant details and try again.');
+        return;
+      }
+      router.push(`/dashboard?res=${data.restaurant.slug}`);
+    } catch (err) {
+      setError(err.message || 'Something went wrong while signing in with Google.');
     }
   };
 
@@ -101,6 +149,16 @@ export default function RegisterPage() {
               />
             </div>
           </label>
+
+          <div className="mt-5">
+            <GoogleSignInButton onCredential={handleGoogleCredential} />
+          </div>
+
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-sand" />
+            <span className="text-xs text-ink/40">or continue with email</span>
+            <div className="h-px flex-1 bg-sand" />
+          </div>
 
           <label className="mt-4 block">
             <span className="mb-1 block text-xs font-semibold text-ink/60">Email</span>

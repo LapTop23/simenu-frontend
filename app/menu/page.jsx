@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CartProvider, useCart } from '../../context/CartContext';
 import { useTenantMenu } from '../../hooks/useTenantMenu';
 import { getSocket } from '../../lib/socket';
+import { fetchOrderById } from '../../lib/api';
 import Header from '../../components/Header';
 import CategoryBar from '../../components/CategoryBar';
 import MenuItemCard from '../../components/MenuItemCard';
@@ -37,6 +38,12 @@ function MenuPage() {
   const [checkoutError, setCheckoutError] = useState(null);
   const [orderConfirmation, setOrderConfirmation] = useState(null);
   const [liveOrderStatus, setLiveOrderStatus] = useState(null);
+  const [isRestoringOrder, setIsRestoringOrder] = useState(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  useEffect(() => {
+    document.title = restaurant?.name ? `${restaurant.name} — Menu` : 'Menu — SiMenu';
+  }, [restaurant]);
 
   const { addItem, lines, clearCart } = useCart();
   const currency = restaurant?.currency || 'PKR';
@@ -113,6 +120,19 @@ function MenuPage() {
       setLiveOrderStatus(response.order.orderStatus);
       clearCart();
       setIsCartOpen(false);
+      setIsModalVisible(true);
+
+      // Remember this order on THIS device, scoped to this restaurant, so
+      // reopening the page later (a refresh, an accidental back-button
+      // press, or coming back from another app) can find it again — the
+      // live tracking connection is no longer lost the moment the
+      // confirmation popup is closed.
+      if (restaurantSlug && response.order?._id) {
+        localStorage.setItem(
+          `simenu_active_order_${restaurantSlug}`,
+          JSON.stringify({ orderId: response.order._id, orderNumber: response.order.orderNumber })
+        );
+      }
     });
   };
 
@@ -131,6 +151,9 @@ function MenuPage() {
     const handleStatusUpdate = (payload) => {
       if (String(payload.orderId) === String(orderConfirmation._id)) {
         setLiveOrderStatus(payload.orderStatus);
+        if (payload.orderStatus === 'Completed' || payload.orderStatus === 'Cancelled') {
+          localStorage.removeItem(`simenu_active_order_${restaurantSlug}`);
+        }
       }
     };
 
@@ -143,6 +166,55 @@ function MenuPage() {
       socket.off('order-status-updated', handleStatusUpdate);
     };
   }, [orderConfirmation?._id]);
+
+  /**
+   * On page load, check whether THIS device has a remembered active order
+   * for THIS restaurant. If so: fetch its current status, rejoin its live
+   * order room over the socket (since a fresh page load means a brand-new
+   * socket connection that was never in that order's room to begin with —
+   * see the 'track-order' handler in the backend), and surface the
+   * persistent tracking banner. Completed/cancelled orders are cleared out
+   * automatically rather than tracked forever.
+   */
+  useEffect(() => {
+    if (!restaurantSlug) return;
+
+    const storageKey = `simenu_active_order_${restaurantSlug}`;
+    const stored = localStorage.getItem(storageKey);
+
+    if (!stored) {
+      setIsRestoringOrder(false);
+      return;
+    }
+
+    let storedOrder;
+    try {
+      storedOrder = JSON.parse(stored);
+    } catch {
+      localStorage.removeItem(storageKey);
+      setIsRestoringOrder(false);
+      return;
+    }
+
+    fetchOrderById(restaurantSlug, storedOrder.orderId)
+      .then((order) => {
+        if (order.orderStatus === 'Completed' || order.orderStatus === 'Cancelled') {
+          localStorage.removeItem(storageKey);
+        } else {
+          setOrderConfirmation(order);
+          setLiveOrderStatus(order.orderStatus);
+          setIsModalVisible(false); // Restored quietly into the banner, not popping the modal open unprompted.
+          getSocket().emit('track-order', { orderId: order._id });
+        }
+      })
+      .catch(() => {
+        // The remembered order no longer exists (deleted, or from a stale/
+        // different restaurant) — clear the dead reference quietly rather
+        // than showing an error for something the customer never asked for.
+        localStorage.removeItem(storageKey);
+      })
+      .finally(() => setIsRestoringOrder(false));
+  }, [restaurantSlug]);
 
   if (status === 'loading') return <FullScreenState message="Loading menu…" />;
   if (status === 'error') return <FullScreenState message={error} isError onRetry={reload} />;
@@ -162,6 +234,25 @@ function MenuPage() {
   return (
     <div className="min-h-screen bg-paper pb-32">
       <Header restaurant={restaurant} tableNumber={tableNumber} />
+
+      {/*
+        Persistent tracking banner — visible whenever there's an active order
+        being tracked but its modal isn't currently open. This is what fixes
+        "closing the confirmation popup loses the connection to my order":
+        the order itself is still being tracked in the background the whole
+        time; this banner is just a way to reopen that same live view.
+      */}
+      {orderConfirmation && !isModalVisible && (
+        <button
+          type="button"
+          onClick={() => setIsModalVisible(true)}
+          className="sticky top-0 z-30 flex w-full items-center justify-center gap-2 bg-saffron/15 px-4 py-2.5 text-xs font-semibold text-saffron-dark"
+        >
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-saffron-dark" />
+          Track your order #{orderConfirmation.orderNumber} — {liveOrderStatus || orderConfirmation.orderStatus}
+        </button>
+      )}
+
       <CategoryBar categories={categories} activeCategory={activeCategory} onSelect={setActiveCategory} />
 
       <main className="mx-auto max-w-lg space-y-3 px-4 py-4">
@@ -202,11 +293,11 @@ function MenuPage() {
         />
       )}
 
-      {orderConfirmation && (
+      {orderConfirmation && isModalVisible && (
         <OrderConfirmedModal
           order={orderConfirmation}
           liveStatus={liveOrderStatus}
-          onClose={() => setOrderConfirmation(null)}
+          onClose={() => setIsModalVisible(false)}
         />
       )}
     </div>

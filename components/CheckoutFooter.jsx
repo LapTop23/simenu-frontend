@@ -15,16 +15,16 @@ export default function CheckoutFooter() {
       <div className="border-t border-sand pt-4 text-center">
         <p className="font-body text-xs tracking-wide text-ink/40">
           Powered by{' '}
-          <a href="https://sayyamijaz.netlify.app"><span className="font-semibold text-ink/60">SiMenu</span></a>
+          <span className="font-semibold text-ink/60">SiMenu</span>
           {' · '}
           Developed by{' '}
           <a
-            href="https://sayyamijaz.netlify.app"
+            href="https://sayyamijaz.dev"
             target="_blank"
             rel="noopener noreferrer nofollow"
             className="font-medium text-ink/60 underline decoration-sand underline-offset-2 transition-colors hover:text-chili"
           >
-            Sayyam Ijaz
+            Sayyamm Ijaz
           </a>
         </p>
       </div>
