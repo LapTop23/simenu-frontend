@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loginOwner, fetchCurrentSession, continueWithGoogle } from '../../lib/api';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function LoginPageRoute() {
   return (
@@ -80,9 +81,7 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-paper px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-basil/30 text-xl font-semibold text-basil">
-            S
-          </div>
+          <img src="/logo.jpeg" alt="SiMenu" className="mx-auto mb-3 h-12 w-12 rounded-full object-cover" />
           <h1 className="font-display text-2xl italic text-ink">Welcome back</h1>
           <p className="mt-1 text-sm text-ink/50">Log in to manage your restaurant on SiMenu.</p>
         </div>
@@ -112,16 +111,19 @@ function LoginPage() {
           </label>
 
           <label className="mt-4 block">
-            <span className="mb-1 block text-xs font-semibold text-ink/60">Password</span>
-            <input
-              type="password"
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-xs font-semibold text-ink/60">Password</span>
+              <a href="/forgot-password" className="text-xs font-semibold text-basil hover:underline">
+                Forgot password?
+              </a>
+            </div>
+            <PasswordInput
               name="password"
               autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-lg border border-sand px-3 py-2.5 text-sm text-ink outline-none focus:border-basil"
             />
           </label>
 

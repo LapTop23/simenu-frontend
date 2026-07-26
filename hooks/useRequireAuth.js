@@ -22,6 +22,7 @@ export function useRequireAuth(restaurantSlug) {
   const router = useRouter();
   const [status, setStatus] = useState('checking');
   const [ownerEmail, setOwnerEmail] = useState(null);
+  const [isEmailVerified, setIsEmailVerified] = useState(true); // Assume verified until we know otherwise, to avoid a banner flash for the common case.
 
   useEffect(() => {
     if (!restaurantSlug) return;
@@ -39,6 +40,7 @@ export function useRequireAuth(restaurantSlug) {
         }
 
         setOwnerEmail(owner.email);
+        setIsEmailVerified(owner.isEmailVerified !== false);
         setStatus('authorized');
       })
       .catch(() => {
@@ -57,5 +59,5 @@ export function useRequireAuth(restaurantSlug) {
     router.replace('/login');
   };
 
-  return { status, ownerEmail, logout };
+  return { status, ownerEmail, isEmailVerified, logout };
 }

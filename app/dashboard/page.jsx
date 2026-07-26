@@ -1,10 +1,11 @@
 // app/dashboard/page.jsx
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAdminMenu } from '../../hooks/useAdminMenu';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
+import { resendVerificationEmail } from '../../lib/api';
 import MenuManagementPanel from '../../components/admin/MenuManagementPanel';
 import QRCodeGeneratorPanel from '../../components/admin/QRCodeGeneratorPanel';
 
@@ -35,13 +36,28 @@ function Dashboard() {
   const searchParams = useSearchParams();
   const restaurantSlug = searchParams.get('res');
   const [activeTab, setActiveTab] = useState('menu');
-  const { status: authStatus, ownerEmail, logout } = useRequireAuth(restaurantSlug);
+  const { status: authStatus, ownerEmail, isEmailVerified, logout } = useRequireAuth(restaurantSlug);
+  const [resendStatus, setResendStatus] = useState('idle'); // 'idle' | 'sending' | 'sent'
 
   // Fetching restaurant name here (rather than duplicating a separate fetch
   // inside QRCodeGeneratorPanel) keeps a single source of truth for tenant
   // identity across both tabs — useAdminMenu already loads it as a side
   // effect of loading the menu.
   const { restaurant, status } = useAdminMenu(restaurantSlug);
+
+  useEffect(() => {
+    document.title = 'Owner Dashboard — SiMenu';
+  }, []);
+
+  const handleResendVerification = async () => {
+    setResendStatus('sending');
+    try {
+      await resendVerificationEmail();
+      setResendStatus('sent');
+    } catch {
+      setResendStatus('idle');
+    }
+  };
 
   if (!restaurantSlug) {
     return <FullScreenState message="No restaurant specified. Append ?res=your-restaurant-slug to the URL." isError />;
@@ -86,6 +102,24 @@ function Dashboard() {
           </div>
         </div>
       </header>
+
+      {!isEmailVerified && (
+        <div className="border-b border-saffron/30 bg-saffron/10 px-5 py-2.5 text-center text-xs font-medium text-saffron-dark">
+          Please verify your email address.{' '}
+          {resendStatus === 'sent' ? (
+            <span>Verification email sent — check your inbox.</span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resendStatus === 'sending'}
+              className="font-semibold underline hover:no-underline disabled:opacity-50"
+            >
+              {resendStatus === 'sending' ? 'Sending…' : 'Resend verification email'}
+            </button>
+          )}
+        </div>
+      )}
 
       <main className="mx-auto max-w-5xl px-5 py-6">
         {activeTab === 'menu' && <MenuManagementPanel restaurantSlug={restaurantSlug} />}

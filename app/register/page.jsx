@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { registerOwner, continueWithGoogle } from '../../lib/api';
 import GoogleSignInButton from '../../components/GoogleSignInButton';
+import PasswordInput from '../../components/PasswordInput';
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -108,9 +109,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-basil/30 text-xl font-semibold text-basil">
-            S
-          </div>
+          <img src="/logo.jpeg" alt="SiMenu" className="mx-auto mb-3 h-12 w-12 rounded-full object-cover" />
           <h1 className="font-display text-2xl italic text-ink">Set up your restaurant</h1>
           <p className="mt-1 text-sm text-ink/50">Free to start — takes about a minute.</p>
         </div>
@@ -176,8 +175,7 @@ export default function RegisterPage() {
 
           <label className="mt-4 block">
             <span className="mb-1 block text-xs font-semibold text-ink/60">Password</span>
-            <input
-              type="password"
+            <PasswordInput
               name="new-password"
               autoComplete="new-password"
               required
@@ -185,7 +183,6 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 8 characters"
-              className="w-full rounded-lg border border-sand px-3 py-2.5 text-sm text-ink outline-none focus:border-basil"
             />
           </label>
 
