@@ -109,8 +109,9 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <img src="/logo.jpeg" alt="logo" className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-basil/30 text-xl font-semibold text-basil">
-          </img>
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-basil/30 text-xl font-semibold text-basil">
+            S
+          </div>
           <h1 className="font-display text-2xl italic text-ink">Set up your restaurant</h1>
           <p className="mt-1 text-sm text-ink/50">Free to start — takes about a minute.</p>
         </div>

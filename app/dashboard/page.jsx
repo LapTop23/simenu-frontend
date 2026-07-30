@@ -8,10 +8,12 @@ import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { resendVerificationEmail } from '../../lib/api';
 import MenuManagementPanel from '../../components/admin/MenuManagementPanel';
 import QRCodeGeneratorPanel from '../../components/admin/QRCodeGeneratorPanel';
+import AnalyticsPanel from '../../components/admin/AnalyticsPanel';
 
 const TABS = [
   { id: 'menu', label: 'Menu Management' },
   { id: 'qr', label: 'Table QR Codes' },
+  { id: 'analytics', label: 'Sales Analytics' },
 ];
 
 /**
@@ -125,6 +127,9 @@ function Dashboard() {
         {activeTab === 'menu' && <MenuManagementPanel restaurantSlug={restaurantSlug} />}
         {activeTab === 'qr' && (
           <QRCodeGeneratorPanel restaurantSlug={restaurantSlug} restaurantName={restaurant?.name || restaurantSlug} />
+        )}
+        {activeTab === 'analytics' && (
+          <AnalyticsPanel restaurantSlug={restaurantSlug} currency={restaurant?.currency || 'PKR'} />
         )}
       </main>
     </div>

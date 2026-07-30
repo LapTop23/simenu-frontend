@@ -40,6 +40,7 @@ function MenuPage() {
   const [liveOrderStatus, setLiveOrderStatus] = useState(null);
   const [isRestoringOrder, setIsRestoringOrder] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [activeDietaryFilters, setActiveDietaryFilters] = useState([]);
 
   useEffect(() => {
     document.title = restaurant?.name ? `${restaurant.name} — Menu` : 'Menu — SiMenu';
@@ -48,12 +49,28 @@ function MenuPage() {
   const { addItem, lines, clearCart } = useCart();
   const currency = restaurant?.currency || 'PKR';
 
+  // Every dietary tag actually in use across this menu — shown as filter
+  // chips only when relevant, rather than always showing all 9 possible
+  // tags regardless of whether this restaurant uses them.
+  const availableDietaryFilters = useMemo(() => {
+    const tagSet = new Set();
+    Object.values(menu).flat().forEach((item) => (item.dietaryTags || []).forEach((tag) => tagSet.add(tag)));
+    return [...tagSet].sort();
+  }, [menu]);
+
+  const toggleDietaryFilter = (tag) => {
+    setActiveDietaryFilters((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  };
+
   const visibleItems = useMemo(() => {
-    if (activeCategory === 'All') {
-      return Object.values(menu).flat();
-    }
-    return menu[activeCategory] || [];
-  }, [menu, activeCategory]);
+    const categoryItems = activeCategory === 'All' ? Object.values(menu).flat() : menu[activeCategory] || [];
+    if (activeDietaryFilters.length === 0) return categoryItems;
+    // A dish must match EVERY selected filter (e.g. "Vegan" + "Gluten-Free"
+    // narrows to dishes that are both, not either) — the more filters
+    // selected, the more specific the result, matching how a customer with
+    // multiple genuine restrictions would expect this to behave.
+    return categoryItems.filter((item) => activeDietaryFilters.every((tag) => (item.dietaryTags || []).includes(tag)));
+  }, [menu, activeCategory, activeDietaryFilters]);
 
   const handleAddDirect = (item, modifiers, quantity = 1) => {
     addItem({
@@ -254,6 +271,26 @@ function MenuPage() {
       )}
 
       <CategoryBar categories={categories} activeCategory={activeCategory} onSelect={setActiveCategory} />
+
+      {availableDietaryFilters.length > 0 && (
+        <div className="mx-auto flex max-w-lg gap-2 overflow-x-auto px-4 pb-2 pt-1">
+          {availableDietaryFilters.map((tag) => {
+            const isActive = activeDietaryFilters.includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleDietaryFilter(tag)}
+                className={`flex-shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                  isActive ? 'border-basil bg-basil text-paper' : 'border-sand bg-white text-ink/60'
+                }`}
+              >
+                {tag}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <main className="mx-auto max-w-lg space-y-3 px-4 py-4">
         {visibleItems.length === 0 ? (

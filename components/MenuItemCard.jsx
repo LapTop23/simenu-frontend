@@ -58,6 +58,22 @@ export default function MenuItemCard({ item, onAddDirect, onRequireModifiers }) 
           <p className={`mt-1 line-clamp-2 text-xs leading-snug ${isSoldOut ? 'text-ink/30' : 'text-ink/60'}`}>
             {item.description}
           </p>
+
+          {!isSoldOut && Array.isArray(item.dietaryTags) && item.dietaryTags.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {item.dietaryTags.map((tag) => (
+                <span key={tag} className="rounded-full bg-basil/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-basil">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {!isSoldOut && Array.isArray(item.allergens) && item.allergens.length > 0 && (
+            <p className="mt-1 text-[10px] text-ink/40">
+              Contains: {item.allergens.join(', ')}
+            </p>
+          )}
         </div>
 
         <div className="mt-2 flex items-center justify-between">

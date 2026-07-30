@@ -5,6 +5,13 @@ import { useState } from 'react';
 import { uploadMenuImage } from '../../lib/api';
 import ToggleSwitch from './ToggleSwitch';
 
+// Fixed lists matching the backend's schema enum exactly (see
+// MenuItem.model.js) — kept as plain checkboxes rather than free text so
+// customer-facing filtering/warnings stay reliable (a typo'd allergen name
+// would silently fail to warn anyone).
+const ALLERGEN_OPTIONS = ['Gluten', 'Dairy', 'Eggs', 'Peanuts', 'Tree Nuts', 'Soy', 'Fish', 'Shellfish', 'Sesame'];
+const DIETARY_TAG_OPTIONS = ['Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Gluten-Free', 'Dairy-Free', 'Nut-Free', 'Keto', 'Low-Carb'];
+
 const EMPTY_ITEM = {
   name: '',
   description: '',
@@ -12,6 +19,8 @@ const EMPTY_ITEM = {
   price: '',
   tagsInput: '',
   images: [],
+  allergens: [],
+  dietaryTags: [],
   isFeatured: false,
   isAvailable: true,
   modifiers: [],
@@ -32,6 +41,8 @@ function toFormState(item) {
     price: item.price !== undefined ? String(item.price) : '',
     tagsInput: (item.tags || []).join(', '),
     images: item.images || [],
+    allergens: item.allergens || [],
+    dietaryTags: item.dietaryTags || [],
     isFeatured: Boolean(item.isFeatured),
     isAvailable: item.isAvailable !== false,
     modifiers: (item.modifiers || []).map((group) => ({ ...group, options: [...group.options] })),
@@ -77,6 +88,13 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
 
   const removeImage = (index) => {
     updateField('images', form.images.filter((_, i) => i !== index));
+  };
+
+  // Shared by both the allergens and dietaryTags checkbox groups below —
+  // adds the value if unchecked, removes it if already present.
+  const toggleArrayValue = (field, value) => {
+    const current = form[field];
+    updateField(field, current.includes(value) ? current.filter((v) => v !== value) : [...current, value]);
   };
 
   // ---- Modifier group builder ----
@@ -150,6 +168,8 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
         price: Number(form.price),
         images: form.images,
         tags: form.tagsInput.split(',').map((t) => t.trim()).filter(Boolean),
+        allergens: form.allergens,
+        dietaryTags: form.dietaryTags,
         isFeatured: form.isFeatured,
         isAvailable: form.isAvailable,
         modifiers: form.modifiers.map((group) => ({
@@ -238,6 +258,53 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
                 className="w-full rounded-lg border border-sand px-3 py-2 text-sm text-ink outline-none focus:border-basil"
               />
             </label>
+          </div>
+
+          {/* ---- Dietary tags ---- */}
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-ink/60">Dietary suitability</span>
+            <div className="flex flex-wrap gap-2">
+              {DIETARY_TAG_OPTIONS.map((tag) => {
+                const isSelected = form.dietaryTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleArrayValue('dietaryTags', tag)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                      isSelected ? 'border-basil bg-basil text-paper' : 'border-sand bg-white text-ink/60 hover:text-ink'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ---- Allergens ---- */}
+          <div>
+            <span className="mb-1 block text-xs font-semibold text-ink/60">Contains allergens</span>
+            <p className="mb-1.5 text-[11px] text-ink/40">
+              Shown to customers as a warning — only mark what this dish genuinely contains.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {ALLERGEN_OPTIONS.map((allergen) => {
+                const isSelected = form.allergens.includes(allergen);
+                return (
+                  <button
+                    key={allergen}
+                    type="button"
+                    onClick={() => toggleArrayValue('allergens', allergen)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                      isSelected ? 'border-chili bg-chili/10 text-chili' : 'border-sand bg-white text-ink/60 hover:text-ink'
+                    }`}
+                  >
+                    {allergen}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* ---- Image upload ---- */}
