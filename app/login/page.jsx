@@ -30,11 +30,11 @@ function LoginPage() {
   }, []);
 
   // If already logged in (a valid cookie from an earlier visit), skip the
-  // login form entirely and go straight to the dashboard.
+  // login form entirely and go to the workspace picker.
   useEffect(() => {
     fetchCurrentSession()
       .then(({ restaurant }) => {
-        router.replace(`/dashboard?res=${restaurant.slug}`);
+        router.replace(`/portal?res=${restaurant.slug}`);
       })
       .catch(() => setIsCheckingSession(false));
   }, [router]);
@@ -47,7 +47,7 @@ function LoginPage() {
     try {
       const { restaurant } = await loginOwner({ email, password, rememberMe });
       const redirectTo = searchParams.get('redirectTo');
-      router.push(redirectTo || `/dashboard?res=${restaurant.slug}`);
+      router.push(redirectTo || `/portal?res=${restaurant.slug}`);
     } catch (err) {
       setError(err.message || 'Something went wrong while logging in.');
       setIsSubmitting(false);
@@ -69,7 +69,7 @@ function LoginPage() {
         return;
       }
       const redirectTo = searchParams.get('redirectTo');
-      router.push(redirectTo || `/dashboard?res=${data.restaurant.slug}`);
+      router.push(redirectTo || `/portal?res=${data.restaurant.slug}`);
     } catch (err) {
       setError(err.message || 'Something went wrong while signing in with Google.');
     }

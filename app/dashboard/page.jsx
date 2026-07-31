@@ -79,6 +79,12 @@ function Dashboard() {
             </h1>
             <div className="flex items-center gap-3">
               {ownerEmail && <span className="hidden text-xs text-ink/40 sm:inline">{ownerEmail}</span>}
+              <a
+                href={`/portal?res=${restaurantSlug}`}
+                className="rounded-full border border-sand px-3 py-1.5 text-xs font-semibold text-ink/60 hover:text-ink"
+              >
+                Switch workspace
+              </a>
               <button
                 type="button"
                 onClick={logout}

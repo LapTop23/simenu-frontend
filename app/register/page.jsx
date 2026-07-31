@@ -67,7 +67,7 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     try {
       const { restaurant } = await registerOwner({ slug, restaurantName, email, password });
-      router.push(`/dashboard?res=${restaurant.slug}`);
+      router.push(`/portal?res=${restaurant.slug}`);
     } catch (err) {
       setError(err.message || 'Something went wrong while creating your account.');
       setIsSubmitting(false);
@@ -99,7 +99,7 @@ export default function RegisterPage() {
         setError('Please double-check your restaurant details and try again.');
         return;
       }
-      router.push(`/dashboard?res=${data.restaurant.slug}`);
+      router.push(`/portal?res=${data.restaurant.slug}`);
     } catch (err) {
       setError(err.message || 'Something went wrong while signing in with Google.');
     }
