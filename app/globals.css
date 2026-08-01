@@ -1,5 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
+/*
+ * Dynamic brand color variables — default to SiMenu's own brand colors
+ * (basil green, saffron gold), expressed as space-separated RGB components
+ * (NOT hex, NOT comma-separated) because that's the exact format Tailwind's
+ * `rgb(var(--x) / <alpha-value>)` pattern requires (see tailwind.config.js).
+ * A restaurant's own branding.primaryColor/secondaryColor overrides these at
+ * runtime via components/ThemeColorInjector.jsx — nothing here needs to
+ * change per-restaurant; this is only ever the fallback before that runs.
+ */
+:root {
+  --color-basil: 31 77 61; /* #1F4D3D */
+  --color-basil-dark: 21 58 45; /* #153A2D */
+  --color-saffron: 231 169 76; /* #E7A94C */
+  --color-saffron-dark: 201 138 46; /* #C98A2E */
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

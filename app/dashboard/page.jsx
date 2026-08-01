@@ -9,10 +9,12 @@ import { resendVerificationEmail } from '../../lib/api';
 import MenuManagementPanel from '../../components/admin/MenuManagementPanel';
 import QRCodeGeneratorPanel from '../../components/admin/QRCodeGeneratorPanel';
 import AnalyticsPanel from '../../components/admin/AnalyticsPanel';
+import SettingsPanel from '../../components/admin/SettingsPanel';
+import WorkspaceMenu from '../../components/admin/WorkspaceMenu';
+import ThemeColorInjector from '../../components/ThemeColorInjector';
 
 const TABS = [
   { id: 'menu', label: 'Menu Management' },
-  { id: 'qr', label: 'Table QR Codes' },
   { id: 'analytics', label: 'Sales Analytics' },
 ];
 
@@ -47,6 +49,13 @@ function Dashboard() {
   // effect of loading the menu.
   const { restaurant, status } = useAdminMenu(restaurantSlug);
 
+  // Holds the most recent branding/plan values saved from the Settings tab —
+  // merged over whatever useAdminMenu originally loaded, so a logo/color
+  // change (or a plan change) reflects everywhere on this page INSTANTLY,
+  // without needing a full reload.
+  const [brandingOverride, setBrandingOverride] = useState(null);
+  const effectiveRestaurant = brandingOverride ? { ...restaurant, ...brandingOverride } : restaurant;
+
   useEffect(() => {
     document.title = 'Owner Dashboard — SiMenu';
   }, []);
@@ -71,6 +80,8 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-paper">
+      <ThemeColorInjector branding={effectiveRestaurant?.branding} />
+
       <header className="no-print sticky top-0 z-20 border-b border-sand bg-white">
         <div className="mx-auto max-w-5xl px-5 py-4">
           <div className="flex items-start justify-between gap-4">
@@ -79,19 +90,15 @@ function Dashboard() {
             </h1>
             <div className="flex items-center gap-3">
               {ownerEmail && <span className="hidden text-xs text-ink/40 sm:inline">{ownerEmail}</span>}
-              <a
-                href={`/portal?res=${restaurantSlug}`}
-                className="rounded-full border border-sand px-3 py-1.5 text-xs font-semibold text-ink/60 hover:text-ink"
-              >
-                Switch workspace
-              </a>
-              <button
-                type="button"
-                onClick={logout}
-                className="rounded-full border border-sand px-3 py-1.5 text-xs font-semibold text-ink/60 hover:text-ink"
-              >
-                Log out
-              </button>
+              <WorkspaceMenu
+                restaurantSlug={restaurantSlug}
+                onLogout={logout}
+                variant="light"
+                extraItems={[
+                  { label: 'Table QR Codes', onClick: () => setActiveTab('qr') },
+                  { label: 'Settings', onClick: () => setActiveTab('settings') },
+                ]}
+              />
             </div>
           </div>
           <div className="mt-3 flex gap-2">
@@ -136,6 +143,13 @@ function Dashboard() {
         )}
         {activeTab === 'analytics' && (
           <AnalyticsPanel restaurantSlug={restaurantSlug} currency={restaurant?.currency || 'PKR'} />
+        )}
+        {activeTab === 'settings' && (
+          <SettingsPanel
+            restaurantSlug={restaurantSlug}
+            restaurant={effectiveRestaurant}
+            onBrandingUpdated={setBrandingOverride}
+          />
         )}
       </main>
     </div>

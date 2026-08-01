@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import OrderCard from '../../components/admin/OrderCard';
+import WorkspaceMenu from '../../components/admin/WorkspaceMenu';
+import ThemeColorInjector from '../../components/ThemeColorInjector';
 
 const FILTER_TABS = ['All', 'Pending', 'Preparing', 'Ready', 'Completed'];
 
@@ -57,6 +59,8 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-paper">
+      <ThemeColorInjector branding={restaurant?.branding} />
+
       {/* ---- Header: dark "control room" surface, distinct from the customer app but sharing its brand DNA ---- */}
       <header className="sticky top-0 z-20 bg-ink text-paper shadow-md">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4">
@@ -77,19 +81,7 @@ function AdminDashboard() {
                 </div>
               ))}
             </div>
-            <a
-              href={`/portal?res=${restaurantSlug}`}
-              className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-paper/70 hover:text-paper"
-            >
-              Switch workspace
-            </a>
-            <button
-              type="button"
-              onClick={logout}
-              className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold text-paper/70 hover:text-paper"
-            >
-              Log out
-            </button>
+            <WorkspaceMenu restaurantSlug={restaurantSlug} onLogout={logout} variant="dark" />
           </div>
         </div>
 

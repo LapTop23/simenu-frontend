@@ -7,6 +7,7 @@ import { useTenantMenu } from '../../hooks/useTenantMenu';
 import { getSocket } from '../../lib/socket';
 import { fetchOrderById } from '../../lib/api';
 import Header from '../../components/Header';
+import ThemeColorInjector from '../../components/ThemeColorInjector';
 import CategoryBar from '../../components/CategoryBar';
 import MenuItemCard from '../../components/MenuItemCard';
 import ModifierSheet from '../../components/ModifierSheet';
@@ -250,6 +251,14 @@ function MenuPage() {
 
   return (
     <div className="min-h-screen bg-paper pb-32">
+      <ThemeColorInjector branding={restaurant?.branding} />
+
+      {restaurant?.plan === 'premium' && restaurant?.branding?.coverImageUrl && (
+        <div className="h-40 w-full overflow-hidden sm:h-56">
+          <img src={restaurant.branding.coverImageUrl} alt={restaurant.name} className="h-full w-full object-cover" />
+        </div>
+      )}
+
       <Header restaurant={restaurant} tableNumber={tableNumber} />
 
       {/*

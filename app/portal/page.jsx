@@ -48,7 +48,7 @@ function Portal() {
 
         <div className="grid w-full max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
           <WorkspaceCard
-            imageSrc="/images/owner-dashboard.jpeg"
+            imageSrc="/images/owner-dashboard.jpg"
             fallbackIcon="📊"
             fallbackTint="bg-basil"
             title="Owner Dashboard"
@@ -56,7 +56,7 @@ function Portal() {
             onClick={() => router.push(`/dashboard?res=${restaurantSlug}`)}
           />
           <WorkspaceCard
-            imageSrc="/images/kitchen-dashboard.jpeg"
+            imageSrc="/images/kitchen-dashboard.jpg"
             fallbackIcon="🍳"
             fallbackTint="bg-chili"
             title="Kitchen Dashboard"
