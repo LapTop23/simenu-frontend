@@ -73,19 +73,21 @@ function MenuPage() {
     return categoryItems.filter((item) => activeDietaryFilters.every((tag) => (item.dietaryTags || []).includes(tag)));
   }, [menu, activeCategory, activeDietaryFilters]);
 
-  const handleAddDirect = (item, modifiers, quantity = 1) => {
+  const handleAddDirect = (item, modifiers, quantity = 1, sizeName = null) => {
+    const basePrice = sizeName ? item.sizes?.find((s) => s.name === sizeName)?.price ?? item.price : item.price;
     addItem({
       itemId: item._id,
       name: item.name,
-      basePrice: item.price,
+      sizeName,
+      basePrice,
       quantity,
       modifiers,
       image: item.images?.[0],
     });
   };
 
-  const handleModifierConfirm = (modifiers, quantity) => {
-    handleAddDirect(activeModifierItem, modifiers, quantity);
+  const handleModifierConfirm = (modifiers, quantity, sizeName) => {
+    handleAddDirect(activeModifierItem, modifiers, quantity, sizeName);
     setActiveModifierItem(null);
   };
 
@@ -122,6 +124,7 @@ function MenuPage() {
       items: lines.map((line) => ({
         menuItemId: line.itemId,
         quantity: line.quantity,
+        sizeName: line.sizeName || undefined,
         selectedModifiers: line.modifiers.map((m) => ({ groupName: m.groupName, optionName: m.optionName })),
       })),
     };

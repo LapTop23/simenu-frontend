@@ -14,11 +14,12 @@
  */
 export default function MenuItemCard({ item, onAddDirect, onRequireModifiers }) {
   const hasModifiers = Array.isArray(item.modifiers) && item.modifiers.length > 0;
+  const hasSizes = Array.isArray(item.sizes) && item.sizes.length > 0;
   const isSoldOut = item.isAvailable === false;
 
   const handleAddClick = () => {
     if (isSoldOut) return;
-    if (hasModifiers) {
+    if (hasModifiers || hasSizes) {
       onRequireModifiers(item);
     } else {
       onAddDirect(item, []);
@@ -47,7 +48,7 @@ export default function MenuItemCard({ item, onAddDirect, onRequireModifiers }) 
         <div>
           <div className="flex items-start justify-between gap-2">
             <h3 className={`font-display text-base font-semibold leading-tight ${isSoldOut ? 'text-ink/40' : 'text-ink'}`}>
-              {item.name}
+              <span className="notranslate">{item.name}</span>
             </h3>
             {item.isFeatured && !isSoldOut && (
               <span className="flex-shrink-0 rounded-full bg-chili/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-chili">
@@ -78,7 +79,7 @@ export default function MenuItemCard({ item, onAddDirect, onRequireModifiers }) 
 
         <div className="mt-2 flex items-center justify-between">
           <span className={`font-mono text-sm font-semibold ${isSoldOut ? 'text-ink/30' : 'text-ink'}`}>
-            {formatPrice(item.price, item.currency)}
+            {hasSizes ? `From ${formatPrice(Math.min(...item.sizes.map((s) => s.price)), item.currency)}` : formatPrice(item.price, item.currency)}
           </span>
 
           <button

@@ -51,8 +51,8 @@ export default function OrderCard({ order, currency, onStatusChange, isNew }) {
 
         <ul className="mt-3 space-y-1.5 border-t border-dashed border-sand pt-3">
           {order.items.map((item, index) => (
-            <li key={index} className="flex items-baseline justify-between gap-3 text-sm">
-              <span className="text-ink/80">
+            <li key={index} className="flex items-baseline justify-between gap-2 text-sm sm:gap-3">
+              <span className="min-w-0 flex-1 break-words text-ink/80">
                 <span className="font-mono text-xs text-ink/40">{item.quantity}×</span> {item.name}
                 {item.selectedModifiers?.length > 0 && (
                   <span className="block text-[11px] text-ink/40">
@@ -79,12 +79,12 @@ export default function OrderCard({ order, currency, onStatusChange, isNew }) {
 
       <div className="mx-4 mt-3 border-t border-dashed border-sand" />
 
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-2">
         <select
           value={order.orderStatus}
           onChange={(e) => onStatusChange(order._id, e.target.value)}
           disabled={isTerminal}
-          className="flex-1 rounded-lg border border-sand bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-lg border border-sand bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1"
         >
           {[...STATUS_FLOW, 'Cancelled'].map((s) => (
             <option key={s} value={s}>
@@ -97,7 +97,7 @@ export default function OrderCard({ order, currency, onStatusChange, isNew }) {
           <button
             type="button"
             onClick={() => onStatusChange(order._id, nextStatus)}
-            className="flex-shrink-0 rounded-lg bg-basil px-3 py-1.5 text-xs font-semibold text-paper transition-transform active:scale-95"
+            className="w-full flex-shrink-0 rounded-lg bg-basil px-3 py-1.5 text-xs font-semibold text-paper transition-transform active:scale-95 sm:w-auto"
           >
             Mark {nextStatus} →
           </button>

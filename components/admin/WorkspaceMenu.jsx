@@ -5,16 +5,21 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * WorkspaceMenu — the "⋮" kebab menu in both the Owner Dashboard and Kitchen
- * Dashboard headers. Replaces what used to be two always-visible buttons
- * ("Switch workspace" / "Log out") with a single compact trigger, matching
- * the more common pattern for secondary/account-level actions.
+ * Dashboard headers. Replaces what used to be several always-visible
+ * buttons/tabs with a single compact trigger, matching the more common
+ * pattern for secondary/account-level actions.
  *
  * `variant="light"` (white header, e.g. the owner dashboard) vs
  * `variant="dark"` (the kitchen dashboard's dark header) swaps just the
  * trigger button's colors — the dropdown panel itself is always a normal
  * white card, since it's floating above whichever header it came from.
+ *
+ * `extraItems` — an optional array of `{ label, onClick }` entries rendered
+ * above "Switch workspace" (e.g. the owner dashboard passes in "Table QR
+ * Codes" and "Settings" here, so those aren't separate top-level tabs
+ * competing for space in the header).
  */
-export default function WorkspaceMenu({ restaurantSlug, onLogout, variant = 'light',extraItems = [] }) {
+export default function WorkspaceMenu({ restaurantSlug, onLogout, variant = 'light', extraItems = [] }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 

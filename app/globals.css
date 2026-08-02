@@ -20,6 +20,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Google Translate integration (components/LanguageSwitcher.jsx) drives
+ * Google's widget programmatically instead of showing its default UI — this
+ * hides that default UI everywhere it would otherwise appear:
+ * - `.goog-te-banner-frame`: the top banner Google sometimes injects
+ * - `body { top: 0 }`: undoes the offset Google adds to push content below that banner
+ * - `.goog-te-gadget-icon` / `.skiptranslate` iframe: stray widget chrome
+ * None of this affects the ACTUAL translation, only Google's default styling.
+ */
+.goog-te-banner-frame {
+  display: none !important;
+}
+body {
+  top: 0 !important;
+}
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+}
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+
 @layer utilities {
   /*
    * .ticket-edge — the signature scalloped/perforated top edge used on the

@@ -17,6 +17,7 @@ const EMPTY_ITEM = {
   description: '',
   category: '',
   price: '',
+  sizes: [],
   tagsInput: '',
   images: [],
   allergens: [],
@@ -39,6 +40,7 @@ function toFormState(item) {
     description: item.description ?? '',
     category: item.category ?? '',
     price: item.price !== undefined ? String(item.price) : '',
+    sizes: (item.sizes || []).map((s) => ({ name: s.name, price: String(s.price) })),
     tagsInput: (item.tags || []).join(', '),
     images: item.images || [],
     allergens: item.allergens || [],
@@ -88,6 +90,21 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
 
   const removeImage = (index) => {
     updateField('images', form.images.filter((_, i) => i !== index));
+  };
+
+  // ---- Size variants (Half/Full, Small/Medium/Large, etc.) ----
+  const addSize = () => {
+    updateField('sizes', [...form.sizes, { name: '', price: '' }]);
+  };
+
+  const updateSize = (index, field, value) => {
+    const next = [...form.sizes];
+    next[index] = { ...next[index], [field]: value };
+    updateField('sizes', next);
+  };
+
+  const removeSize = (index) => {
+    updateField('sizes', form.sizes.filter((_, i) => i !== index));
   };
 
   // Shared by both the allergens and dietaryTags checkbox groups below —
@@ -140,6 +157,13 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
     if (!form.category.trim()) return 'Category is required.';
     const priceNumber = Number(form.price);
     if (form.price === '' || Number.isNaN(priceNumber) || priceNumber < 0) return 'Enter a valid, non-negative price.';
+    for (const size of form.sizes) {
+      if (!size.name.trim()) return 'Every size needs a name (e.g. "Half", "Full").';
+      const sizePriceNumber = Number(size.price);
+      if (size.price === '' || Number.isNaN(sizePriceNumber) || sizePriceNumber < 0) {
+        return `Enter a valid, non-negative price for size "${size.name}".`;
+      }
+    }
     for (const group of form.modifiers) {
       if (!group.name.trim()) return 'Every modifier group needs a name.';
       if (group.options.length === 0) return `"${group.name}" needs at least one option.`;
@@ -166,6 +190,7 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
         description: form.description.trim(),
         category: form.category.trim(),
         price: Number(form.price),
+        sizes: form.sizes.map((s) => ({ name: s.name.trim(), price: Number(s.price) })),
         images: form.images,
         tags: form.tagsInput.split(',').map((t) => t.trim()).filter(Boolean),
         allergens: form.allergens,
@@ -225,7 +250,9 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
             </label>
 
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-ink/60">Price</span>
+              <span className="mb-1 block text-xs font-semibold text-ink/60">
+                Price {form.sizes.length > 0 && <span className="font-normal text-ink/40">(unused — sizes below set the price instead)</span>}
+              </span>
               <input
                 type="number"
                 step="0.01"
@@ -258,6 +285,47 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
                 className="w-full rounded-lg border border-sand px-3 py-2 text-sm text-ink outline-none focus:border-basil"
               />
             </label>
+          </div>
+
+          {/* ---- Size variants (Half/Full, Small/Medium/Large, etc.) ---- */}
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-ink/60">Sizes / portions (optional)</span>
+              <button type="button" onClick={addSize} className="text-xs font-semibold text-basil hover:underline">
+                + Add size
+              </button>
+            </div>
+            <p className="mt-0.5 text-[11px] text-ink/40">
+              Leave empty for a single fixed price. Add sizes (e.g. Half / Full) and customers must pick one.
+            </p>
+
+            {form.sizes.length > 0 && (
+              <div className="mt-2 space-y-1.5">
+                {form.sizes.map((size, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={size.name}
+                      onChange={(e) => updateSize(index, 'name', e.target.value)}
+                      placeholder="Half"
+                      className="flex-1 rounded-lg border border-sand px-2.5 py-1.5 text-xs text-ink outline-none focus:border-basil"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={size.price}
+                      onChange={(e) => updateSize(index, 'price', e.target.value)}
+                      placeholder="800"
+                      className="w-24 rounded-lg border border-sand px-2.5 py-1.5 font-mono text-xs text-ink outline-none focus:border-basil"
+                    />
+                    <button type="button" onClick={() => removeSize(index)} className="text-xs text-ink/40 hover:text-chili">
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ---- Dietary tags ---- */}

@@ -7,16 +7,17 @@ const CartContext = createContext(null);
 
 /**
  * Builds a stable identity for a cart line: the same dish with the same
- * modifier selections should stack quantity into one line; the same dish
- * with a DIFFERENT modifier selection must become its own separate line
- * (a plain burger and a burger with extra cheese are not the same order line).
+ * modifier selections AND the same size should stack quantity into one
+ * line; a different size (Half vs Full) or a different modifier selection
+ * must become its own separate line — "Karahi (Half)" and "Karahi (Full)"
+ * are not the same order line, even though they're the same dish.
  */
-function buildCartLineId(itemId, modifiers) {
+function buildCartLineId(itemId, modifiers, sizeName) {
   const modifierKey = [...modifiers]
     .map((m) => `${m.groupName}:${m.optionName}`)
     .sort()
     .join('|');
-  return `${itemId}__${modifierKey}`;
+  return `${itemId}__${sizeName || 'default'}__${modifierKey}`;
 }
 
 function calculateUnitPrice(basePrice, modifiers) {
@@ -27,8 +28,8 @@ function calculateUnitPrice(basePrice, modifiers) {
 function cartReducer(state, action) {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const { itemId, name, basePrice, quantity, modifiers, image } = action.payload;
-      const cartLineId = buildCartLineId(itemId, modifiers);
+      const { itemId, name, basePrice, quantity, modifiers, image, sizeName } = action.payload;
+      const cartLineId = buildCartLineId(itemId, modifiers, sizeName);
       const unitPrice = calculateUnitPrice(basePrice, modifiers);
 
       const existingLine = state.lines.find((line) => line.cartLineId === cartLineId);
@@ -44,7 +45,7 @@ function cartReducer(state, action) {
       return {
         lines: [
           ...state.lines,
-          { cartLineId, itemId, name, basePrice, unitPrice, quantity, modifiers, image },
+          { cartLineId, itemId, name, sizeName: sizeName || null, basePrice, unitPrice, quantity, modifiers, image },
         ],
       };
     }

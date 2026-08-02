@@ -61,32 +61,52 @@ function AdminDashboard() {
     <div className="min-h-screen bg-paper">
       <ThemeColorInjector branding={restaurant?.branding} />
 
-      {/* ---- Header: dark "control room" surface, distinct from the customer app but sharing its brand DNA ---- */}
+      {/* ---- Header: dark "control room" surface, distinct from the customer app but sharing its brand DNA ----
+          Mobile-first: compact text/padding/gaps by default, stepping up in
+          size only from `sm:` (≥640px) upward — nothing here is sized for
+          desktop-first-then-shrunk, which is what caused cramped text and
+          page-wide overflow (forcing the browser to zoom out) on small phones. */}
       <header className="sticky top-0 z-20 bg-ink text-paper shadow-md">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4">
-          <div>
-            <h1 className="font-display text-xl italic text-paper">{restaurant?.name || 'SiMenu'} — Live Orders</h1>
-            <div className="mt-1 flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-saffron" />
-              <span className="text-[11px] uppercase tracking-wider text-paper/50">Connected · live</span>
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3 sm:px-5 sm:py-4">
+          <div className="flex items-center justify-between gap-2 sm:block">
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-base italic text-paper sm:text-xl">
+                <span className="notranslate">{restaurant?.name || 'SiMenu'}</span> — Live Orders
+              </h1>
+              <div className="mt-0.5 flex items-center gap-1.5 sm:mt-1">
+                <span className="h-1.5 w-1.5 flex-shrink-0 animate-pulse rounded-full bg-saffron" />
+                <span className="text-[10px] uppercase tracking-wider text-paper/50 sm:text-[11px]">Connected · live</span>
+              </div>
+            </div>
+            {/* On mobile, the ⋮ menu sits inline with the title row so it's
+                never pushed below the fold by the count badges below it. */}
+            <div className="flex-shrink-0 sm:hidden">
+              <WorkspaceMenu restaurantSlug={restaurantSlug} onLogout={logout} variant="dark" />
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex gap-3 font-mono text-xs">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Bounded, independently-scrolling row — this can NEVER force the
+                overall page wider than the viewport, which is what a
+                non-wrapping flex row without its own overflow handling would
+                otherwise do (and is exactly what triggers a mobile browser to
+                zoom the whole page out to fit). */}
+            <div className="no-scrollbar flex flex-1 gap-1.5 overflow-x-auto font-mono text-xs sm:flex-none sm:gap-3">
               {Object.entries(counts).map(([label, count]) => (
-                <div key={label} className="rounded-lg bg-white/5 px-3 py-1.5 text-center">
-                  <p className="text-sm font-bold text-saffron">{count}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-paper/40">{label}</p>
+                <div key={label} className="flex-shrink-0 rounded-lg bg-white/5 px-2 py-1 text-center sm:px-3 sm:py-1.5">
+                  <p className="text-xs font-bold text-saffron sm:text-sm">{count}</p>
+                  <p className="text-[9px] uppercase tracking-wide text-paper/40 sm:text-[10px]">{label}</p>
                 </div>
               ))}
             </div>
-            <WorkspaceMenu restaurantSlug={restaurantSlug} onLogout={logout} variant="dark" />
+            <div className="hidden flex-shrink-0 sm:block">
+              <WorkspaceMenu restaurantSlug={restaurantSlug} onLogout={logout} variant="dark" />
+            </div>
           </div>
         </div>
 
         {/* ---- Filter tabs ---- */}
-        <div className="no-scrollbar mx-auto flex max-w-6xl gap-2 overflow-x-auto px-5 pb-3">
+        <div className="no-scrollbar mx-auto flex max-w-6xl gap-1.5 overflow-x-auto px-3 pb-2.5 sm:gap-2 sm:px-5 sm:pb-3">
           {FILTER_TABS.map((tab) => {
             const isActive = tab === activeFilter;
             return (
@@ -94,7 +114,7 @@ function AdminDashboard() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveFilter(tab)}
-                className={`flex-shrink-0 rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors ${
+                className={`flex-shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors sm:px-3.5 sm:py-1 sm:text-xs ${
                   isActive
                     ? 'border-saffron bg-saffron text-ink'
                     : 'border-white/15 bg-transparent text-paper/60 hover:text-paper'
@@ -108,11 +128,11 @@ function AdminDashboard() {
       </header>
 
       {/* ---- Order grid ---- */}
-      <main className="mx-auto max-w-6xl px-5 py-6">
+      <main className="mx-auto max-w-6xl px-3 py-4 sm:px-5 sm:py-6">
         {filteredOrders.length === 0 ? (
           <p className="py-24 text-center text-sm text-ink/40">No orders in this view yet.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
             {filteredOrders.map((order) => (
               <OrderCard
                 key={order._id}

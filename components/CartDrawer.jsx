@@ -46,7 +46,10 @@ export default function CartDrawer({ currency = 'PKR', tableNumber, onClose, onC
                   )}
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="truncate text-sm font-semibold text-ink">{line.name}</p>
+                      <p className="truncate text-sm font-semibold text-ink">
+                        <span className="notranslate">{line.name}</span>
+                        {line.sizeName && <span className="text-ink/50"> ({line.sizeName})</span>}
+                      </p>
                       <button
                         type="button"
                         onClick={() => removeLine(line.cartLineId)}

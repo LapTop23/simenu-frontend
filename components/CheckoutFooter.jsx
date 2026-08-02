@@ -19,12 +19,12 @@ export default function CheckoutFooter() {
           {' · '}
           Developed by{' '}
           <a
-            href="https://sayyamijaz.dev"
+            href="https://sayyamijaz.netlify.app/"
             target="_blank"
             rel="noopener noreferrer nofollow"
             className="font-medium text-ink/60 underline decoration-sand underline-offset-2 transition-colors hover:text-chili"
           >
-            Sayyamm Ijaz
+            Sayyam Ijaz
           </a>
         </p>
       </div>
