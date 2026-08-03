@@ -82,7 +82,7 @@ function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-basil/30 text-xl font-semibold text-basil">
-            S
+            SI
           </div>
           <h1 className="font-display text-2xl italic text-ink">Welcome back</h1>
           <p className="mt-1 text-sm text-ink/50">Log in to manage your restaurant on SiMenu.</p>
