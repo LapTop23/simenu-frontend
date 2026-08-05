@@ -8,6 +8,7 @@ import { getSocket } from '../../lib/socket';
 import { fetchOrderById } from '../../lib/api';
 import Header from '../../components/Header';
 import ThemeColorInjector from '../../components/ThemeColorInjector';
+import MenuChatbot from '../../components/MenuChatbot';
 import CategoryBar from '../../components/CategoryBar';
 import MenuItemCard from '../../components/MenuItemCard';
 import ModifierSheet from '../../components/ModifierSheet';
@@ -348,6 +349,10 @@ function MenuPage() {
           liveStatus={liveOrderStatus}
           onClose={() => setIsModalVisible(false)}
         />
+      )}
+
+      {restaurant?.plan === 'premium' && (
+        <MenuChatbot restaurantSlug={restaurantSlug} restaurantName={restaurant?.name || 'SiMenu'} />
       )}
     </div>
   );
