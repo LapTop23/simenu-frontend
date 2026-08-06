@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadMenuImage } from '../../lib/api';
+import { uploadMenuImage, updateMenuItem } from '../../lib/api';
 import ToggleSwitch from './ToggleSwitch';
 
 // Fixed lists matching the backend's schema enum exactly (see
@@ -71,6 +71,20 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
 
   const updateField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
+  /**
+   * Same underlying bug/fix as SettingsPanel's logo and cover-image uploads:
+   * a mobile browser being backgrounded or killed before this form's
+   * separate "Add item"/"Save changes" button is ever clicked meant an
+   * uploaded photo could sit successfully in Cloudinary but never actually
+   * get attached to the menu item — appearing to "disappear" hours later.
+   *
+   * When EDITING an existing item (it already has a real `_id` in the
+   * database), this now saves the photo immediately, the same way the two
+   * settings-panel uploads do. A brand-new, not-yet-created item has no
+   * `_id` to save against yet — for that case, the photo still only
+   * attaches once the whole form is submitted, which is why the upload
+   * button's label makes that explicit below.
+   */
   const handleImageSelect = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = ''; // Allow re-selecting the same file later.
@@ -80,7 +94,12 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
     setFormError(null);
     try {
       const { url } = await uploadMenuImage(restaurantSlug, file);
-      updateField('images', [...form.images, url]);
+      const nextImages = [...form.images, url];
+      updateField('images', nextImages);
+
+      if (isEditing && item?._id) {
+        await updateMenuItem(restaurantSlug, item._id, { images: nextImages });
+      }
     } catch (err) {
       setFormError(err.message || 'Image upload failed.');
     } finally {
@@ -378,6 +397,11 @@ export default function MenuItemForm({ item, restaurantSlug, onSubmit, onClose }
           {/* ---- Image upload ---- */}
           <div>
             <span className="mb-1 block text-xs font-semibold text-ink/60">Photos</span>
+            {!isEditing && (
+              <p className="mb-1.5 text-[11px] text-ink/40">
+                Photos here save once you tap "Add item" below — for a dish that already exists, edit it directly to have photos save instantly.
+              </p>
+            )}
             <div className="flex flex-wrap gap-2">
               {form.images.map((url, index) => (
                 <div key={url} className="relative h-16 w-16 flex-shrink-0">

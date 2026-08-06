@@ -11,7 +11,7 @@ import { useState } from 'react';
  * (Chrome/Google Password Manager, etc.) exactly as it already worked before
  * this toggle was added.
  */
-export default function PasswordInput({ value, onChange, name, autoComplete, placeholder, required, minLength }) {
+export default function PasswordInput({ value, onChange, name, autoComplete, placeholder, required, minLength, inputClassName, toggleClassName }) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
@@ -25,13 +25,13 @@ export default function PasswordInput({ value, onChange, name, autoComplete, pla
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-sand px-3 py-2.5 pr-10 text-sm text-ink outline-none focus:border-basil"
+        className={inputClassName || 'w-full rounded-lg border border-sand px-3 py-2.5 pr-10 text-sm text-ink outline-none focus:border-basil'}
       />
       <button
         type="button"
         onClick={() => setIsVisible((prev) => !prev)}
         aria-label={isVisible ? 'Hide password' : 'Show password'}
-        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink/40 hover:text-ink/70"
+        className={toggleClassName || 'absolute inset-y-0 right-0 flex w-10 items-center justify-center text-ink/40 hover:text-ink/70'}
       >
         {isVisible ? <EyeOffIcon /> : <EyeIcon />}
       </button>

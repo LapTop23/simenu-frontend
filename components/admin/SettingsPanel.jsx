@@ -131,6 +131,17 @@ function BrandingSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
+  /**
+   * Persists the moment the upload succeeds, rather than waiting for the
+   * separate "Save branding" button below — this is the actual fix for
+   * "photo disappears after some hours on mobile": previously, a mobile
+   * browser being backgrounded/reloaded (very common — an incoming call, an
+   * app switch, the OS reclaiming memory from a suspended tab) between
+   * uploading and clicking Save meant the photo was successfully stored in
+   * Cloudinary but NEVER actually written to this restaurant's document —
+   * it only ever existed as a local, unsaved preview. Saving immediately
+   * here removes that entire window of risk.
+   */
   const handleLogoSelect = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -141,6 +152,8 @@ function BrandingSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
     try {
       const { url } = await uploadMenuImage(restaurantSlug, file);
       setLogoUrl(url);
+      const updated = await updateBranding(restaurantSlug, { logoUrl: url });
+      onBrandingUpdated?.(updated);
     } catch (err) {
       setError(err.message || 'Logo upload failed.');
     } finally {
@@ -271,6 +284,9 @@ function CoverImageSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
+  // Same fix as BrandingSection's logo upload — see that comment for the
+  // full "why" (mobile browsers being backgrounded/killed before a separate
+  // Save click is what caused uploaded photos to silently never persist).
   const handleSelect = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -281,6 +297,8 @@ function CoverImageSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
     try {
       const { url } = await uploadMenuImage(restaurantSlug, file);
       setCoverImageUrl(url);
+      const updated = await updateBranding(restaurantSlug, { coverImageUrl: url });
+      onBrandingUpdated?.(updated);
     } catch (err) {
       setError(err.message || 'Cover image upload failed.');
     } finally {

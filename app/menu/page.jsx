@@ -9,6 +9,7 @@ import { fetchOrderById } from '../../lib/api';
 import Header from '../../components/Header';
 import ThemeColorInjector from '../../components/ThemeColorInjector';
 import MenuChatbot from '../../components/MenuChatbot';
+import ReviewWidget from '../../components/ReviewWidget';
 import CategoryBar from '../../components/CategoryBar';
 import MenuItemCard from '../../components/MenuItemCard';
 import ModifierSheet from '../../components/ModifierSheet';
@@ -42,6 +43,11 @@ function MenuPage() {
   const [liveOrderStatus, setLiveOrderStatus] = useState(null);
   const [isRestoringOrder, setIsRestoringOrder] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  // True only for an order placed THIS session (fresh checkout) — never for
+  // an order restored from localStorage on page load, so the review prompt
+  // is never re-shown just from reopening the tracking banner.
+  const [isFreshOrder, setIsFreshOrder] = useState(false);
+  const [showReviewWidget, setShowReviewWidget] = useState(false);
   const [activeDietaryFilters, setActiveDietaryFilters] = useState([]);
 
   useEffect(() => {
@@ -143,6 +149,7 @@ function MenuPage() {
       clearCart();
       setIsCartOpen(false);
       setIsModalVisible(true);
+      setIsFreshOrder(true);
 
       // Remember this order on THIS device, scoped to this restaurant, so
       // reopening the page later (a refresh, an accidental back-button
@@ -347,7 +354,22 @@ function MenuPage() {
         <OrderConfirmedModal
           order={orderConfirmation}
           liveStatus={liveOrderStatus}
-          onClose={() => setIsModalVisible(false)}
+          onClose={() => {
+            setIsModalVisible(false);
+            if (isFreshOrder) {
+              setShowReviewWidget(true);
+              setIsFreshOrder(false); // Only ever prompt once per fresh order.
+            }
+          }}
+        />
+      )}
+
+      {showReviewWidget && orderConfirmation && (
+        <ReviewWidget
+          restaurantSlug={restaurantSlug}
+          orderId={orderConfirmation._id}
+          tableNumber={tableNumber}
+          onDismiss={() => setShowReviewWidget(false)}
         />
       )}
 
