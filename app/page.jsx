@@ -12,7 +12,7 @@
 import HeroQRDemo from '../components/marketing/HeroQRDemo';
 import FAQAccordion from '../components/marketing/FAQAccordion';
 
-const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://simenu.com';
+const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sidigimenu.com';
 
 export const metadata = {
   title: 'SiMenu — QR Ordering & Live Kitchen Dashboard for Restaurants',

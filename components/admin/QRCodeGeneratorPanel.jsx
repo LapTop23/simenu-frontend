@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import QRTableCard from './QRTableCard';
 import { fetchTableKeys } from '../../lib/api';
 
-const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://simenu.com';
+const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sidigimenu.com';
 
 /**
  * QRCodeGeneratorPanel — owner enters a table count, the panel fetches each

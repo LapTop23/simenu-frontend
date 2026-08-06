@@ -3,7 +3,7 @@
 
 import { QRCodeSVG } from 'qrcode.react';
 
-const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://simenu.com';
+const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sidigimenu.com';
 // Points at a real, seeded demo restaurant so a visitor can genuinely scan
 // this and use the live product — not a screenshot, not a mockup. Set up a
 // restaurant with slug "demo" (see the project README) for this to work;
