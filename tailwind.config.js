@@ -19,12 +19,12 @@ module.exports = {
           dark: '#B01F1F',
         },
         saffron: {
-          DEFAULT: '#E7A94C',
-          dark: '#C98A2E',
+          DEFAULT: 'rgb(var(--color-saffron) / <alpha-value>)',
+          dark: 'rgb(var(--color-saffron-dark) / <alpha-value>)',
         },
         basil: {
-          DEFAULT: '#1F4D3D',
-          dark: '#153A2D',
+          DEFAULT: 'rgb(var(--color-basil) / <alpha-value>)',
+          dark: 'rgb(var(--color-basil-dark) / <alpha-value>)',
         },
         sand: '#E7E2D8',
       },

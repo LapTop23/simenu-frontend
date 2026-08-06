@@ -3,8 +3,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { loginOwner, fetchCurrentSession, continueWithGoogle } from '../../lib/api';
-import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { loginOwner, fetchCurrentSession, resendVerificationEmail } from '../../lib/api';
 import PasswordInput from '../../components/PasswordInput';
 
 export default function LoginPageRoute() {
@@ -24,6 +23,8 @@ function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendStatus, setResendStatus] = useState('idle'); // 'idle' | 'sending' | 'sent'
 
   useEffect(() => {
     document.title = 'Log In — SiMenu';
@@ -43,6 +44,7 @@ function LoginPage() {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
+    setNeedsVerification(false);
 
     try {
       const { restaurant } = await loginOwner({ email, password, rememberMe });
@@ -50,28 +52,21 @@ function LoginPage() {
       router.push(redirectTo || `/portal?res=${restaurant.slug}`);
     } catch (err) {
       setError(err.message || 'Something went wrong while logging in.');
+      // Matches the specific message auth.controller.js#login sends for an
+      // unverified account — used here purely to decide whether to show
+      // the resend option, not for anything security-sensitive.
+      setNeedsVerification((err.message || '').toLowerCase().includes('verify your email'));
       setIsSubmitting(false);
     }
   };
 
-  /**
-   * A Google credential here always represents a RETURNING owner on this
-   * page — a first-time Google sign-in with no existing account is directed
-   * to /register instead (see there for the "finish signup" flow), rather
-   * than silently creating a bare account with no restaurant attached.
-   */
-  const handleGoogleCredential = async (credential) => {
-    setError(null);
+  const handleResend = async () => {
+    setResendStatus('sending');
     try {
-      const data = await continueWithGoogle({ credential });
-      if (data.needsRestaurantDetails) {
-        setError('No SiMenu account found for this Google account yet. Please create one from the Sign Up page.');
-        return;
-      }
-      const redirectTo = searchParams.get('redirectTo');
-      router.push(redirectTo || `/portal?res=${data.restaurant.slug}`);
-    } catch (err) {
-      setError(err.message || 'Something went wrong while signing in with Google.');
+      await resendVerificationEmail(email);
+      setResendStatus('sent');
+    } catch {
+      setResendStatus('idle');
     }
   };
 
@@ -97,6 +92,25 @@ function LoginPage() {
         */}
         <form onSubmit={handleSubmit} className="rounded-3xl border border-sand bg-white p-6 shadow-sm shadow-ink/5">
           {error && <p className="mb-4 rounded-lg bg-chili/10 px-3 py-2 text-xs font-medium text-chili">{error}</p>}
+
+          {needsVerification && (
+            <div className="mb-4">
+              {resendStatus === 'sent' ? (
+                <p className="text-xs font-medium text-basil">
+                  If that email has an account needing verification, a new link is on its way.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendStatus === 'sending'}
+                  className="text-xs font-semibold text-basil hover:underline disabled:opacity-50"
+                >
+                  {resendStatus === 'sending' ? 'Sending…' : 'Resend verification email'}
+                </button>
+              )}
+            </div>
+          )}
 
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-ink/60">Email</span>
@@ -146,14 +160,6 @@ function LoginPage() {
           >
             {isSubmitting ? 'Logging in…' : 'Log in'}
           </button>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-sand" />
-            <span className="text-xs text-ink/40">or</span>
-            <div className="h-px flex-1 bg-sand" />
-          </div>
-
-          <GoogleSignInButton onCredential={handleGoogleCredential} />
         </form>
 
         <p className="mt-5 text-center text-sm text-ink/50">

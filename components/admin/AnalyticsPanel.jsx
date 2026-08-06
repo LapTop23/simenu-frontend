@@ -11,14 +11,16 @@ const RANGE_OPTIONS = [
   { label: '90 days', days: 90 },
 ];
 
-export default function AnalyticsPanel({ restaurantSlug, currency }) {
+export default function AnalyticsPanel({ restaurantSlug, currency, plan }) {
   const [rangeDays, setRangeDays] = useState(7);
   const [data, setData] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
 
+  const isLocked = plan === 'free' || plan === 'starter';
+
   useEffect(() => {
-    if (!restaurantSlug) return;
+    if (!restaurantSlug || isLocked) return;
     setStatus('loading');
     setError(null);
 
@@ -31,7 +33,22 @@ export default function AnalyticsPanel({ restaurantSlug, currency }) {
         setError(err.message || 'Could not load sales analytics.');
         setStatus('error');
       });
-  }, [restaurantSlug, rangeDays]);
+  }, [restaurantSlug, rangeDays, isLocked]);
+
+  if (isLocked) {
+    return (
+      <div className="rounded-2xl border border-sand bg-white p-8 text-center">
+        <div className="flex items-center justify-center gap-2">
+          <h2 className="font-display text-lg italic text-ink">Sales overview</h2>
+          <span className="rounded-full bg-saffron/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-saffron-dark">Growth+</span>
+        </div>
+        <p className="mx-auto mt-3 max-w-sm text-sm text-ink/60">
+          Revenue, order counts, and your best-selling dishes are available on the{' '}
+          <span className="font-semibold text-ink">Growth plan</span> and above. Upgrade your plan to unlock sales analytics.
+        </p>
+      </div>
+    );
+  }
 
   if (status === 'loading') return <p className="py-16 text-center text-sm text-ink/40">Loading sales data…</p>;
   if (status === 'error') return <p className="py-16 text-center text-sm text-chili">{error}</p>;

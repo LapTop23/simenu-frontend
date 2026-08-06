@@ -44,11 +44,11 @@ const FEATURES = [
 ];
 
 const PRICING_TIERS = [
-  { name: 'Free', price: '0', includes: '1 restaurant, 3 tables, QR ordering' },
-  { name: 'Starter', price: '1,499', includes: 'Core QR ordering, live kitchen dashboard, up to 100 menu items' },
-  { name: 'Growth', price: '2,499', includes: 'Everything in Starter + sales analytics, size variants, multi-language, dynamic branding', highlighted: true },
-  { name: 'Business', price: '3,999', includes: 'Everything in Growth + header cover image, priority support' },
-  { name: 'Premium', price: '5,999', includes: 'Everything in Business + AI menu assistant, custom domain' },
+  { name: 'Free', slug: 'free', price: '0', includes: '1 restaurant, 3 tables, QR ordering' },
+  { name: 'Starter', slug: 'starter', price: '1,499', includes: 'Core QR ordering, live kitchen dashboard, up to 100 menu items' },
+  { name: 'Growth', slug: 'growth', price: '2,499', includes: 'Everything in Starter + sales analytics, size variants, multi-language, dynamic branding', highlighted: true },
+  { name: 'Business', slug: 'business', price: '3,999', includes: 'Everything in Growth + header cover image, priority support' },
+  { name: 'Premium', slug: 'premium', price: '5,999', includes: 'Everything in Business + AI menu assistant, custom domain' },
 ];
 
 const FAQ_ITEMS = [
@@ -214,12 +214,12 @@ export default function HomePage() {
                 </p>
                 <p className="mt-3 flex-1 text-xs text-ink/60">{tier.includes}</p>
                 <a
-                  href="/register"
+                  href={tier.slug === 'premium' ? '/register?plan=premium' : `/register?plan=${tier.slug}`}
                   className={`mt-4 rounded-full px-4 py-2 text-center text-xs font-semibold ${
                     tier.highlighted ? 'bg-chili text-paper' : 'bg-white text-ink border border-sand'
                   }`}
                 >
-                  Get started
+                  {tier.slug === 'premium' ? 'Contact us' : 'Get started'}
                 </a>
               </div>
             ))}

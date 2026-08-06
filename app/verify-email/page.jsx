@@ -2,8 +2,8 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { verifyEmail } from '../../lib/api';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { verifyEmail, resendVerificationEmail } from '../../lib/api';
 
 export default function VerifyEmailRoute() {
   return (
@@ -14,10 +14,13 @@ export default function VerifyEmailRoute() {
 }
 
 function VerifyEmailPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
   const [status, setStatus] = useState('verifying'); // 'verifying' | 'success' | 'error'
   const [message, setMessage] = useState('');
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendStatus, setResendStatus] = useState('idle'); // 'idle' | 'sending' | 'sent'
 
   useEffect(() => {
     document.title = 'Verify Email — SiMenu';
@@ -31,12 +34,28 @@ function VerifyEmailPage() {
     }
 
     verifyEmail(token)
-      .then(() => setStatus('success'))
+      .then(({ restaurant }) => {
+        setStatus('success');
+        // Verifying now logs the owner in immediately (see auth.controller.js#verifyEmail)
+        // — a brief pause lets them read the confirmation before landing in their workspace.
+        setTimeout(() => router.push(`/portal?res=${restaurant.slug}`), 1500);
+      })
       .catch((err) => {
         setStatus('error');
         setMessage(err.message || 'This verification link is invalid or has expired.');
       });
-  }, [token]);
+  }, [token, router]);
+
+  const handleResend = async () => {
+    if (!resendEmail.trim()) return;
+    setResendStatus('sending');
+    try {
+      await resendVerificationEmail(resendEmail.trim());
+      setResendStatus('sent');
+    } catch {
+      setResendStatus('idle');
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper px-4">
@@ -49,13 +68,7 @@ function VerifyEmailPage() {
               <span className="text-2xl text-basil">✓</span>
             </div>
             <h1 className="font-display text-xl font-semibold text-ink">Email verified</h1>
-            <p className="mt-2 text-sm text-ink/60">Your email has been confirmed. You're all set.</p>
-            <a
-              href="/login"
-              className="mt-6 inline-block w-full rounded-2xl bg-chili py-3 font-semibold text-paper shadow-md shadow-chili/30"
-            >
-              Go to login
-            </a>
+            <p className="mt-2 text-sm text-ink/60">You're all set — taking you to your dashboard…</p>
           </>
         )}
 
@@ -66,14 +79,36 @@ function VerifyEmailPage() {
             </div>
             <h1 className="font-display text-xl font-semibold text-ink">Verification failed</h1>
             <p className="mt-2 text-sm text-chili">{message}</p>
-            <p className="mt-4 text-xs text-ink/50">
-              You can request a new verification email from your dashboard after logging in.
-            </p>
-            <a
-              href="/login"
-              className="mt-6 inline-block w-full rounded-2xl bg-basil py-3 font-semibold text-paper"
-            >
-              Go to login
+
+            {resendStatus === 'sent' ? (
+              <p className="mt-5 text-xs font-medium text-basil">
+                If that email has an account needing verification, a new link is on its way.
+              </p>
+            ) : (
+              <div className="mt-5 space-y-2 text-left">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-semibold text-ink/60">Get a new verification link</span>
+                  <input
+                    type="email"
+                    value={resendEmail}
+                    onChange={(e) => setResendEmail(e.target.value)}
+                    placeholder="[email protected]"
+                    className="w-full rounded-lg border border-sand px-3 py-2 text-sm text-ink outline-none focus:border-basil"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendStatus === 'sending' || !resendEmail.trim()}
+                  className="w-full rounded-xl bg-basil py-2 text-sm font-semibold text-paper disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {resendStatus === 'sending' ? 'Sending…' : 'Resend verification email'}
+                </button>
+              </div>
+            )}
+
+            <a href="/login" className="mt-5 inline-block text-xs font-semibold text-ink/50 hover:text-ink">
+              Back to login
             </a>
           </>
         )}

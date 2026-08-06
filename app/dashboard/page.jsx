@@ -63,7 +63,7 @@ function Dashboard() {
   const handleResendVerification = async () => {
     setResendStatus('sending');
     try {
-      await resendVerificationEmail();
+      await resendVerificationEmail(ownerEmail);
       setResendStatus('sent');
     } catch {
       setResendStatus('idle');
@@ -142,7 +142,7 @@ function Dashboard() {
           <QRCodeGeneratorPanel restaurantSlug={restaurantSlug} restaurantName={restaurant?.name || restaurantSlug} />
         )}
         {activeTab === 'analytics' && (
-          <AnalyticsPanel restaurantSlug={restaurantSlug} currency={restaurant?.currency || 'PKR'} />
+          <AnalyticsPanel restaurantSlug={restaurantSlug} currency={restaurant?.currency || 'PKR'} plan={effectiveRestaurant?.plan} />
         )}
         {activeTab === 'settings' && (
           <SettingsPanel

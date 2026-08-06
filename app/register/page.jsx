@@ -1,38 +1,47 @@
 // app/register/page.jsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { registerOwner, continueWithGoogle } from '../../lib/api';
-import GoogleSignInButton from '../../components/GoogleSignInButton';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { registerOwner, resendVerificationEmail } from '../../lib/api';
 import PasswordInput from '../../components/PasswordInput';
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-export default function RegisterPage() {
-  const router = useRouter();
+// Only these four are self-serve — Premium requires payment setup before
+// activation, which isn't built yet (no card collection exists), so it's
+// deliberately never offered as a normal signup path here. The backend
+// independently rejects a 'premium' plan at registration too, regardless of
+// what this page shows — see auth.controller.js#register.
+const SELF_SERVE_PLANS = ['free', 'starter', 'growth', 'business'];
+const PLAN_LABELS = { free: 'Free', starter: 'Starter', growth: 'Growth', business: 'Business' };
+
+export default function RegisterPageRoute() {
+  return (
+    <Suspense fallback={<FullScreenState message="Loading…" />}>
+      <RegisterPage />
+    </Suspense>
+  );
+}
+
+function RegisterPage() {
+  const searchParams = useSearchParams();
+  const requestedPlan = searchParams.get('plan');
+
   const [restaurantName, setRestaurantName] = useState('');
   const [slug, setSlug] = useState('');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [registeredEmail, setRegisteredEmail] = useState(null);
+  const [resendStatus, setResendStatus] = useState('idle'); // 'idle' | 'sending' | 'sent'
 
   useEffect(() => {
     document.title = 'Create Your Account — SiMenu';
   }, []);
-
-  // Shared by both the password form AND the Google button below — a
-  // restaurant name + valid web address are required regardless of which
-  // sign-up method finishes the job.
-  const validateRestaurantDetails = () => {
-    if (!restaurantName.trim()) return 'Restaurant name is required.';
-    if (!SLUG_PATTERN.test(slug)) {
-      return 'Your restaurant\'s web address may only contain lowercase letters, numbers, and hyphens.';
-    }
-    return null;
-  };
 
   // Auto-suggests a URL-safe slug from the restaurant name, but stops
   // auto-updating the moment the owner types into the slug field directly —
@@ -50,60 +59,106 @@ export default function RegisterPage() {
     }
   };
 
+  // Premium isn't self-serve yet (no payment collection built) — rather than
+  // let someone fill out the whole form and hit a confusing rejection at the
+  // very end, show this dedicated screen immediately if that's what was requested.
+  if (requestedPlan === 'premium') {
+    return (
+      <FullScreenState
+        title="Premium requires a quick setup call"
+        message="Premium includes unlimited tables and the AI menu assistant, and needs payment arranged before your account is activated — this isn't self-serve yet. Please contact us and we'll get you set up."
+        action={{ label: 'Sign up for a different plan instead', href: '/register' }}
+      />
+    );
+  }
+
+  const plan = SELF_SERVE_PLANS.includes(requestedPlan) ? requestedPlan : 'free';
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
 
-    const validationError = validateRestaurantDetails();
-    if (validationError) {
-      setError(validationError);
+    if (!restaurantName.trim()) {
+      setError('Restaurant name is required.');
+      return;
+    }
+    if (!SLUG_PATTERN.test(slug)) {
+      setError('Your restaurant\'s web address may only contain lowercase letters, numbers, and hyphens.');
       return;
     }
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
       return;
     }
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const { restaurant } = await registerOwner({ slug, restaurantName, email, password });
-      router.push(`/portal?res=${restaurant.slug}`);
+      await registerOwner({ slug, restaurantName, email, password, plan, agreedToTerms });
+      // No redirect — strict email verification means there's no login
+      // session yet to redirect with (register() deliberately issues no
+      // cookie). Show a clear "check your email" confirmation right here instead.
+      setRegisteredEmail(email.trim().toLowerCase());
     } catch (err) {
       setError(err.message || 'Something went wrong while creating your account.');
       setIsSubmitting(false);
     }
   };
 
-  /**
-   * The restaurant name/slug fields at the top of this form are collected
-   * BEFORE either sign-up method — Google's button, once clicked, hands back
-   * a verified credential immediately, so those two fields need to already
-   * be valid by the time that happens, checked here rather than relying on
-   * the (skipped, in this path) password-form submit handler.
-   */
-  const handleGoogleCredential = async (credential) => {
-    setError(null);
-
-    const validationError = validateRestaurantDetails();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+  const handleResend = async () => {
+    setResendStatus('sending');
     try {
-      const data = await continueWithGoogle({ credential, restaurantName, slug });
-      if (data.needsRestaurantDetails) {
-        // Shouldn't normally happen here since restaurantName/slug are
-        // always sent from this page — but handled defensively in case the
-        // backend's rules ever change.
-        setError('Please double-check your restaurant details and try again.');
-        return;
-      }
-      router.push(`/portal?res=${data.restaurant.slug}`);
-    } catch (err) {
-      setError(err.message || 'Something went wrong while signing in with Google.');
+      await resendVerificationEmail(registeredEmail);
+      setResendStatus('sent');
+    } catch {
+      setResendStatus('idle');
     }
   };
+
+  // Shown immediately after a successful registration — there's no login
+  // session yet (strict verification means register() issues no cookie), so
+  // this replaces the old "redirect straight to the dashboard" behavior.
+  if (registeredEmail) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-paper px-4 text-center">
+        <div className="w-full max-w-sm rounded-3xl border border-sand bg-white p-8">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-basil/10 text-2xl">
+            ✉️
+          </div>
+          <h1 className="font-display text-xl italic text-ink">Check your email</h1>
+          <p className="mt-2 text-sm text-ink/60">
+            We've sent a verification link to <span className="font-semibold text-ink">{registeredEmail}</span>.
+            Click it to activate your account — you won't be able to log in until you do.
+          </p>
+
+          {resendStatus === 'sent' ? (
+            <p className="mt-5 text-xs font-medium text-basil">
+              If that email has an account needing verification, a new link is on its way.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendStatus === 'sending'}
+              className="mt-5 text-xs font-semibold text-basil hover:underline disabled:opacity-50"
+            >
+              {resendStatus === 'sending' ? 'Sending…' : "Didn't get it? Resend the email"}
+            </button>
+          )}
+
+          <p className="mt-6 text-sm text-ink/50">
+            Already verified?{' '}
+            <a href="/login" className="font-semibold text-basil hover:underline">
+              Log in
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper px-4 py-10">
@@ -113,7 +168,11 @@ export default function RegisterPage() {
             S
           </div>
           <h1 className="font-display text-2xl italic text-ink">Set up your restaurant</h1>
-          <p className="mt-1 text-sm text-ink/50">Free to start — takes about a minute.</p>
+          <p className="mt-1 text-sm text-ink/50">
+            {plan === 'free'
+              ? 'Free to start — takes about a minute.'
+              : `Signing up for the ${PLAN_LABELS[plan]} plan — your first month is free.`}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-3xl border border-sand bg-white p-6 shadow-sm shadow-ink/5">
@@ -151,16 +210,6 @@ export default function RegisterPage() {
             </div>
           </label>
 
-          <div className="mt-5">
-            <GoogleSignInButton onCredential={handleGoogleCredential} />
-          </div>
-
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-sand" />
-            <span className="text-xs text-ink/40">or continue with email</span>
-            <div className="h-px flex-1 bg-sand" />
-          </div>
-
           <label className="mt-4 block">
             <span className="mb-1 block text-xs font-semibold text-ink/60">Email</span>
             <input
@@ -188,9 +237,29 @@ export default function RegisterPage() {
             />
           </label>
 
+          <label className="mt-4 flex items-start gap-2 text-xs text-ink/70">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              required
+              className="mt-0.5 h-4 w-4 flex-shrink-0 rounded border-sand accent-basil"
+            />
+            <span>
+              I agree to the{' '}
+              <a href="/legal/terms" target="_blank" rel="noopener noreferrer" className="font-semibold text-basil hover:underline">
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a href="/legal/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold text-basil hover:underline">
+                Privacy Policy
+              </a>
+            </span>
+          </label>
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !agreedToTerms}
             className="mt-6 w-full rounded-2xl bg-chili py-3 font-semibold text-paper shadow-md shadow-chili/30 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? 'Creating your account…' : 'Create account'}
@@ -204,6 +273,20 @@ export default function RegisterPage() {
           </a>
         </p>
       </div>
+    </div>
+  );
+}
+
+function FullScreenState({ title, message, action }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center">
+      {title && <h1 className="mb-2 font-display text-xl italic text-ink">{title}</h1>}
+      <p className="max-w-sm text-sm text-ink/60">{message}</p>
+      {action && (
+        <a href={action.href} className="mt-5 text-sm font-semibold text-basil hover:underline">
+          {action.label}
+        </a>
+      )}
     </div>
   );
 }

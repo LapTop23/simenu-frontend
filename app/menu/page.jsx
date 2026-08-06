@@ -257,7 +257,7 @@ function MenuPage() {
     <div className="min-h-screen bg-paper pb-32">
       <ThemeColorInjector branding={restaurant?.branding} />
 
-      {restaurant?.plan === 'premium' && restaurant?.branding?.coverImageUrl && (
+      {(restaurant?.plan === 'business' || restaurant?.plan === 'premium') && restaurant?.branding?.coverImageUrl && (
         <div className="h-40 w-full overflow-hidden sm:h-56">
           <img src={restaurant.branding.coverImageUrl} alt={restaurant.name} className="h-full w-full object-cover" />
         </div>

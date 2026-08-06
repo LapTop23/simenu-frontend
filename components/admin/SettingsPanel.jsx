@@ -163,12 +163,25 @@ function BrandingSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
     }
   };
 
+  const isLocked = restaurant?.plan === 'free' || restaurant?.plan === 'starter';
+
   return (
     <section className="rounded-2xl border border-sand bg-white p-5">
-      <h2 className="font-display text-lg italic text-ink">Logo &amp; theme color</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="font-display text-lg italic text-ink">Logo &amp; theme color</h2>
+        <span className="rounded-full bg-saffron/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-saffron-dark">Growth+</span>
+      </div>
       <p className="mt-1 text-xs text-ink/50">
         Your logo and colors appear on your customer menu and both dashboards.
       </p>
+
+      {isLocked ? (
+        <div className="mt-3 rounded-xl bg-paper px-4 py-4 text-sm text-ink/60">
+          A custom logo and your own theme colors are available on the{' '}
+          <span className="font-semibold text-ink">Growth plan</span> and above. Upgrade your plan to customize your branding.
+        </div>
+      ) : (
+        <>
 
       {error && <p className="mt-3 rounded-lg bg-chili/10 px-3 py-2 text-xs font-medium text-chili">{error}</p>}
       {success && <p className="mt-3 rounded-lg bg-basil/10 px-3 py-2 text-xs font-medium text-basil">Branding updated.</p>}
@@ -241,15 +254,17 @@ function BrandingSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
       >
         {isSaving ? 'Saving…' : 'Save branding'}
       </button>
+        </>
+      )}
     </section>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Header cover image — Premium plan only
+// Header cover image — Business plan and above
 // ---------------------------------------------------------------------------
 function CoverImageSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
-  const isPremium = restaurant?.plan === 'premium';
+  const isUnlocked = restaurant?.plan === 'business' || restaurant?.plan === 'premium';
   const [coverImageUrl, setCoverImageUrl] = useState(restaurant?.branding?.coverImageUrl || '');
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -292,13 +307,13 @@ function CoverImageSection({ restaurantSlug, restaurant, onBrandingUpdated }) {
     <section className="rounded-2xl border border-sand bg-white p-5">
       <div className="flex items-center gap-2">
         <h2 className="font-display text-lg italic text-ink">Header cover image</h2>
-        <span className="rounded-full bg-saffron/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-saffron-dark">Premium</span>
+        <span className="rounded-full bg-saffron/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-saffron-dark">Business+</span>
       </div>
 
-      {!isPremium ? (
+      {!isUnlocked ? (
         <div className="mt-3 rounded-xl bg-paper px-4 py-4 text-sm text-ink/60">
           A large cover photo at the top of your customer menu is available on the{' '}
-          <span className="font-semibold text-ink">Premium plan</span>. Contact us to upgrade.
+          <span className="font-semibold text-ink">Business plan</span> and above. Upgrade your plan to use it.
         </div>
       ) : (
         <>
