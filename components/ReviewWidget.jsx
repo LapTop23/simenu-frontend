@@ -44,12 +44,15 @@ export default function ReviewWidget({ restaurantSlug, orderId, tableNumber, onD
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg px-4 pb-4 sm:bottom-6">
-      <div className="ticket-edge relative rounded-t-3xl border border-sand bg-white p-5 pt-6 shadow-xl shadow-ink/15 sm:rounded-b-3xl">
+      {/* Dark theme deliberately — the customer menu's background is white,
+          so a white card here blended in and didn't grab attention. Black
+          (bg-ink) makes this genuinely stand out the moment it appears. */}
+      <div className="ticket-edge relative rounded-t-3xl border border-white/10 bg-ink p-5 pt-6 shadow-xl shadow-ink/40 sm:rounded-b-3xl">
         <button
           type="button"
           onClick={onDismiss}
           aria-label="Close"
-          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-paper text-ink/40 hover:text-ink"
+          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-paper/50 hover:text-paper"
         >
           ✕
         </button>
@@ -57,18 +60,18 @@ export default function ReviewWidget({ restaurantSlug, orderId, tableNumber, onD
         {status === 'submitted' ? (
           <div className="py-4 text-center">
             <p className="text-2xl">🙏</p>
-            <p className="mt-2 text-sm font-semibold text-ink">Thank you for your feedback!</p>
+            <p className="mt-2 text-sm font-semibold text-paper">Thank you for your feedback!</p>
           </div>
         ) : (
           <>
-            <h3 className="pr-6 text-sm font-semibold leading-snug text-ink">
+            <h3 className="pr-6 text-sm font-semibold leading-snug text-paper">
               How was your ordering experience with SiMenu (Digital Menu)?
             </h3>
-            <p className="mt-1 pr-6 text-sm leading-snug text-ink/70" dir="rtl" lang="ur">
+            <p className="mt-1 pr-6 text-sm leading-snug text-paper/70" dir="rtl" lang="ur">
               اپ کو اس ڈیجیٹل مینیو کے ساتھ ارڈر کرکے کیسا لگا؟
             </p>
 
-            {error && <p className="mt-3 rounded-lg bg-chili/10 px-3 py-2 text-xs font-medium text-chili">{error}</p>}
+            {error && <p className="mt-3 rounded-lg bg-chili/20 px-3 py-2 text-xs font-medium text-chili">{error}</p>}
 
             <div className="mt-4 flex justify-center gap-1.5">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -81,7 +84,7 @@ export default function ReviewWidget({ restaurantSlug, orderId, tableNumber, onD
                   aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
                   className="p-1 text-3xl leading-none transition-transform active:scale-90"
                 >
-                  <span className={(hoverRating || rating) >= star ? 'text-saffron' : 'text-sand'}>★</span>
+                  <span className={(hoverRating || rating) >= star ? 'text-saffron' : 'text-white/20'}>★</span>
                 </button>
               ))}
             </div>
@@ -92,14 +95,14 @@ export default function ReviewWidget({ restaurantSlug, orderId, tableNumber, onD
               placeholder="Anything you'd like to share? (optional)"
               rows={2}
               maxLength={1000}
-              className="mt-4 w-full resize-none rounded-xl border border-sand px-3 py-2 text-sm text-ink outline-none focus:border-basil"
+              className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-white/30"
             />
 
             <div className="mt-4 flex gap-2">
               <button
                 type="button"
                 onClick={onDismiss}
-                className="flex-1 rounded-2xl border border-sand py-2.5 text-sm font-semibold text-ink/60"
+                className="flex-1 rounded-2xl border border-white/15 py-2.5 text-sm font-semibold text-paper/60"
               >
                 Skip
               </button>
